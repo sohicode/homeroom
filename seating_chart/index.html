@@ -438,7 +438,6 @@
     <div class="card-body">
       <div class="action-row">
         <button class="primary" id="assignBtn" onclick="assign()">랜덤 배치 실행</button>
-        <button id="reshuffleBtn" onclick="assign()" style="display:none;">다시 섞기</button>
         <button id="downloadBtn" onclick="downloadCSV()" style="display:none;">CSV 다운로드</button>
       </div>
       <div class="notice">
@@ -693,11 +692,6 @@ function renderResult(result) {
   const classroom = document.getElementById('classroom');
   classroom.innerHTML = '';
 
-  // 방향 라벨 (뒤쪽)
-  const backLabel = document.createElement('div');
-  backLabel.className = 'dir-row';
-  backLabel.innerHTML = '<span></span><span>← 뒤쪽 (창문) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (문) 뒤쪽 →</span><span></span>';
-
   const backDir = document.createElement('div');
   backDir.className = 'dir-row';
   backDir.innerHTML = `<span style="font-size:0.72rem;color:var(--text-faint);font-family:'DM Mono',monospace;letter-spacing:0.05em;padding-bottom:0.25rem;">← 창쪽 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 문쪽 →</span>`;
@@ -794,7 +788,6 @@ function renderResult(result) {
   classroom.appendChild(podiumRow);
 
   document.getElementById('resultCard').style.display = 'block';
-  document.getElementById('reshuffleBtn').style.display = 'inline-block';
   document.getElementById('downloadBtn').style.display = 'inline-block';
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -821,15 +814,17 @@ function downloadCSV() {
 
   const bom = '\uFEFF';
   const csv = bom + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-
   const today = new Date();
   const d = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `좌석배치_${d}.csv`;
+  a.href = url;
+  a.download = `seating_${d}.csv`;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 </script>
 </body>
