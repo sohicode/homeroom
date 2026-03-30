@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>좌석 교체</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F1;
+    --surface: #FFFFFF;
+    --surface2: #F0EFE9;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1A18;
+    --text-muted: #6B6A65;
+    --text-faint: #A5A49F;
+    --accent: #2A2A27;
+    --accent-fg: #F7F6F1;
+    --radius: 10px;
+    --radius-sm: 6px;
+
+    --front-bg: #E6F1FB;
+    --front-border: #85B7EB;
+    --front-text: #0C447C;
+
+    --normal-bg: #F0EFE9;
+    --normal-border: rgba(0,0,0,0.15);
+
+    --empty-bg: #FAFAF8;
+    --empty-border: rgba(0,0,0,0.07);
+
+    --select-bg: #FAEEDA;
+    --select-border: #EF9F27;
+    --select-text: #633806;
+
+    --swap-flash-bg: #EAF3DE;
+    --swap-flash-border: #639922;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+  header span { font-size: 0.8rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent); color: var(--accent-fg);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; flex-shrink: 0;
+  }
+
+  .card-header h2 { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+  .card-body { padding: 1.25rem; }
+
+  /* 업로드 */
+  .upload-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .upload-zone:hover { background: var(--surface2); border-color: var(--accent); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { width: 36px; height: 36px; margin: 0 auto 0.75rem; opacity: 0.3; }
+  .upload-main { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
+  .upload-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+  .format-box {
+    margin-top: 1rem;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .format-box code {
+    font-family: 'DM Mono', monospace; font-size: 0.78rem;
+    color: var(--text); background: var(--surface);
+    padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  .error-msg {
+    margin-top: 0.75rem; padding: 0.6rem 0.9rem;
+    background: #FCEBEB; color: #791F1F;
+    border-radius: var(--radius-sm); font-size: 0.8rem; display: none;
+  }
+
+  /* 버튼 */
+  button {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.875rem; font-weight: 500;
+    border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+    padding: 0.55rem 1.1rem; cursor: pointer;
+    background: var(--surface); color: var(--text);
+    transition: background 0.12s, transform 0.08s; white-space: nowrap;
+  }
+  button:hover { background: var(--surface2); }
+  button:active { transform: scale(0.97); }
+  button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  button.primary:hover { background: #3A3A36; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* 교체 상태 바 */
+  .swap-status {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--select-bg);
+    border: 1px solid var(--select-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .swap-status.visible { display: flex; }
+
+  .swap-slot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .swap-slot-label {
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+  }
+  .swap-slot-name {
+    font-weight: 700;
+    color: var(--select-text);
+    font-size: 0.9rem;
+  }
+  .swap-slot-name.empty {
+    color: var(--text-faint);
+    font-weight: 400;
+    font-style: italic;
+  }
+  .swap-arrow {
+    font-size: 1rem;
+    color: var(--select-text);
+    opacity: 0.5;
+  }
+  .swap-status-msg {
+    font-size: 0.78rem;
+    color: var(--select-text);
+    margin-left: auto;
+  }
+
+  /* 교체 이력 */
+  .history-wrap {
+    margin-top: 1rem;
+    display: none;
+  }
+  .history-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+  }
+  .history-item strong { color: var(--text); font-weight: 700; }
+  .history-undo {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.1s, color 0.1s;
+  }
+  .history-undo:hover { background: #FCEBEB; color: #791F1F; border-color: rgba(163,45,45,0.3); }
+
+  /* 좌석표 */
+  .classroom-wrap { overflow-x: auto; padding-bottom: 0.5rem; }
+
+  .classroom { display: flex; flex-direction: column; gap: 0; min-width: 560px; }
+
+  .dir-row {
+    font-size: 0.72rem; color: var(--text-faint);
+    font-family: 'DM Mono', monospace; letter-spacing: 0.05em;
+    padding-bottom: 0.25rem;
+  }
+
+  .classroom-inner { display: flex; align-items: stretch; }
+
+  .dir-side {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    font-size: 0.68rem; color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    writing-mode: vertical-rl; letter-spacing: 0.08em;
+    padding: 0 4px; min-width: 20px;
+  }
+
+  .seat-grid {
+    display: flex; gap: 8px; padding: 0 8px; flex: 1; justify-content: center;
+  }
+
+  .col { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+  .col-label {
+    font-size: 0.68rem; color: var(--text-faint);
+    font-family: 'DM Mono', monospace; text-align: center;
+    margin-bottom: 2px; height: 16px;
+  }
+
+  .seat {
+    width: 86px; min-height: 52px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--normal-border);
+    background: var(--normal-bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 6px 4px; position: relative;
+    transition: border-color 0.12s, background 0.12s, transform 0.1s, box-shadow 0.12s;
+  }
+
+  .seat.has-student { cursor: pointer; }
+  .seat.has-student:hover {
+    border-color: var(--select-border);
+    background: #FFFBF4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239,159,39,0.15);
+  }
+
+  .seat.is-front { background: var(--front-bg); border-color: var(--front-border); }
+  .seat.is-front:hover { background: #D8EBFA; }
+
+  .seat.empty {
+    background: var(--empty-bg);
+    border-color: var(--empty-border);
+    border-style: dashed;
+    cursor: default;
+  }
+
+  /* 선택된 좌석 */
+  .seat.selected {
+    background: var(--select-bg) !important;
+    border-color: var(--select-border) !important;
+    border-width: 2px;
+    box-shadow: 0 0 0 3px rgba(239,159,39,0.2);
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  /* 교체 완료 flash */
+  .seat.flash {
+    animation: flashSwap 0.5s ease;
+  }
+  @keyframes flashSwap {
+    0%   { background: var(--swap-flash-bg); border-color: var(--swap-flash-border); }
+    100% { background: inherit; border-color: inherit; }
+  }
+
+  .seat-phantom {
+    width: 86px; min-height: 52px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed transparent;
+    background: transparent; pointer-events: none;
+  }
+
+  .seat-num {
+    font-size: 0.6rem; color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    position: absolute; top: 3px; right: 5px;
+  }
+
+  .seat-name {
+    font-size: 0.82rem; font-weight: 700;
+    color: var(--text); text-align: center; line-height: 1.2;
+  }
+  .seat.is-front .seat-name { color: var(--front-text); }
+  .seat.selected .seat-name { color: var(--select-text); }
+
+  .seat-badge {
+    font-size: 0.6rem; color: var(--front-text);
+    background: rgba(14,68,124,0.12);
+    border-radius: 100px; padding: 1px 5px; margin-top: 2px;
+  }
+
+  .front-divider {
+    width: 100%; border: none;
+    border-top: 1.5px dashed var(--front-border);
+    margin: 2px 0; opacity: 0.5;
+  }
+
+  .podium-row { display: flex; justify-content: center; padding: 0.75rem 0 0; }
+  .podium {
+    background: var(--accent); color: var(--accent-fg);
+    border-radius: var(--radius-sm); padding: 0.5rem 2.5rem;
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em;
+  }
+
+  /* 범례 */
+  .legend {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1rem; align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-muted); }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 3px;
+    border: 1px solid transparent; flex-shrink: 0;
+  }
+
+  .result-actions {
+    display: flex; gap: 0.75rem;
+    margin-top: 1.25rem; padding-top: 1.25rem;
+    border-top: 1px solid var(--border); flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .swap-count-badge {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-faint);
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 1rem; }
+    .container { padding: 1rem; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>좌석 교체</h1>
+  <span>클릭 두 번으로 자리 맞교환</span>
+</header>
+
+<div class="container">
+
+  <!-- Step 1: CSV 업로드 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="step-num">1</div>
+      <h2>기존 좌석 배치 CSV 업로드</h2>
+    </div>
+    <div class="card-body">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="csvInput" accept=".csv,.txt">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4-4 4 4"/>
+        </svg>
+        <div class="upload-main">좌석배치_YYYYMMDD.csv 파일 업로드</div>
+        <div class="upload-sub">seat_arrangement.html에서 다운로드한 CSV 파일</div>
+      </div>
+
+      <div class="format-box">
+        <strong>CSV 형식</strong> (seat_arrangement.html 출력 형식 그대로)<br>
+        <code>"열","행","이름","앞자리신청"</code><br>
+        예: <code>"1열","1행","홍길동","X"</code>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: 좌석 교체 -->
+  <div class="card" id="swapCard" style="display:none;">
+    <div class="card-header">
+      <div class="step-num">2</div>
+      <h2>자리 교체</h2>
+    </div>
+    <div class="card-body">
+
+      <!-- 교체 상태 바 -->
+      <div class="swap-status" id="swapStatus">
+        <div class="swap-slot">
+          <span class="swap-slot-label">1번째</span>
+          <span class="swap-slot-name empty" id="slot1">선택 안 됨</span>
+        </div>
+        <span class="swap-arrow">⇄</span>
+        <div class="swap-slot">
+          <span class="swap-slot-label">2번째</span>
+          <span class="swap-slot-name empty" id="slot2">선택 안 됨</span>
+        </div>
+        <span class="swap-status-msg" id="swapMsg">교체할 첫 번째 학생을 클릭하세요</span>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--front-bg);border-color:var(--front-border);"></div>
+          앞자리 신청 학생
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--normal-bg);border-color:rgba(0,0,0,0.2);"></div>
+          일반 학생
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--select-bg);border-color:var(--select-border);"></div>
+          선택됨
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--empty-bg);border-color:var(--empty-border);border-style:dashed;"></div>
+          빈 자리
+        </div>
+      </div>
+
+      <div class="classroom-wrap">
+        <div class="classroom" id="classroom"></div>
+      </div>
+
+      <!-- 교체 이력 -->
+      <div class="history-wrap" id="historyWrap">
+        <div class="history-label">교체 이력</div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <div class="result-actions">
+        <button class="primary" onclick="downloadCSV()">CSV 다운로드</button>
+        <button onclick="resetSelection()" id="cancelBtn" disabled>선택 취소</button>
+        <span class="swap-count-badge" id="swapCountBadge"></span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// 좌석 구조
+// ─────────────────────────────────────────────
+const COLS = [
+  { id: 5, rows: 6 },
+  { id: 4, rows: 6 },
+  { id: 3, rows: 6 },
+  { id: 2, rows: 6 },
+  { id: 1, rows: 4 },
+];
+const MAX_ROWS = 6;
+const FRONT_ROWS = 3;
+
+// seatMap: "col-row" → { name, isApplied } | null
+let seatMap = new Map();
+let selected = null;   // 현재 선택된 좌석 key
+let swapHistory = [];  // [{ key1, name1, key2, name2 }]
+
+// ─────────────────────────────────────────────
+// 파일 처리
+// ─────────────────────────────────────────────
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background = '#F0EFE9'; });
+zone.addEventListener('dragleave', () => { zone.style.background = ''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.style.background = '';
+  if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+});
+document.getElementById('csvInput').addEventListener('change', e => {
+  if (e.target.files[0]) readFile(e.target.files[0]);
+});
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => parseCSV(ev.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+
+  // BOM 제거
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.trim().split(/\r?\n/).filter(l => l.trim());
+
+  // 헤더 행 스킵 (첫 줄이 "열","행" 형태면)
+  const dataLines = lines[0].includes('열') && lines[0].includes('행') ? lines.slice(1) : lines;
+
+  seatMap = new Map();
+  const errors = [];
+
+  dataLines.forEach((line, i) => {
+    // 쌍따옴표 제거 후 파싱
+    const parts = line.split(',').map(p => p.replace(/^"|"$/g, '').trim());
+    if (parts.length < 3) { errors.push(`줄 ${i+2}: 컬럼 수 부족`); return; }
+
+    const colStr  = parts[0]; // "1열"
+    const rowStr  = parts[1]; // "2행"
+    const name    = parts[2]; // "홍길동" or ""
+    const applied = parts[3] ? parts[3].toUpperCase() === 'O' : false;
+
+    const col = parseInt(colStr);
+    const row = parseInt(rowStr);
+    if (isNaN(col) || isNaN(row)) { errors.push(`줄 ${i+2}: 열/행 파싱 오류 → "${line}"`); return; }
+
+    const key = `${col}-${row}`;
+    if (name) {
+      seatMap.set(key, { name, isApplied: applied });
+    }
+    // 빈 자리는 Map에 넣지 않음 (get → undefined = 빈 자리)
+  });
+
+  if (errors.length) {
+    errEl.textContent = errors.join(' | ');
+    errEl.style.display = 'block';
+  }
+
+  if (seatMap.size === 0 && errors.length === 0) {
+    errEl.textContent = '학생 데이터를 찾을 수 없습니다. 파일 형식을 확인해 주세요.';
+    errEl.style.display = 'block';
+    document.getElementById('swapCard').style.display = 'none';
+    return;
+  }
+
+  // 에러가 있어도 일부 데이터가 있으면 계속 진행, 없으면 중단
+  if (seatMap.size === 0) {
+    document.getElementById('swapCard').style.display = 'none';
+    return;
+  }
+
+  selected = null;
+  swapHistory = [];
+  document.getElementById('swapCard').style.display = 'block';
+  renderClassroom();
+  updateSwapStatus();
+  renderHistory();
+  document.getElementById('swapCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ─────────────────────────────────────────────
+// 좌석 렌더링
+// ─────────────────────────────────────────────
+function renderClassroom() {
+  const classroom = document.getElementById('classroom');
+  classroom.innerHTML = '';
+
+  const dirRow = document.createElement('div');
+  dirRow.className = 'dir-row';
+  dirRow.textContent = '← 창쪽 ' + '\u00a0'.repeat(70) + ' 문쪽 →';
+  classroom.appendChild(dirRow);
+
+  const inner = document.createElement('div');
+  inner.className = 'classroom-inner';
+
+  const sideL = document.createElement('div');
+  sideL.className = 'dir-side';
+  sideL.textContent = '창 쪽';
+
+  const sideR = document.createElement('div');
+  sideR.className = 'dir-side';
+  sideR.textContent = '문 쪽';
+
+  const grid = document.createElement('div');
+  grid.className = 'seat-grid';
+
+  for (const col of COLS) {
+    const colEl = document.createElement('div');
+    colEl.className = 'col';
+
+    const label = document.createElement('div');
+    label.className = 'col-label';
+    label.textContent = `${col.id}열`;
+    colEl.appendChild(label);
+
+    for (let row = MAX_ROWS; row >= 1; row--) {
+      if (row > col.rows) {
+        const phantom = document.createElement('div');
+        phantom.className = 'seat-phantom';
+        colEl.appendChild(phantom);
+        continue;
+      }
+
+      const key = `${col.id}-${row}`;
+      const occupied = seatMap.get(key);
+      const seatEl = makeSeatEl(key, occupied, row);
+      colEl.appendChild(seatEl);
+
+      if (row === FRONT_ROWS + 1) {
+        const div = document.createElement('hr');
+        div.className = 'front-divider';
+        colEl.appendChild(div);
+      }
+    }
+    grid.appendChild(colEl);
+  }
+
+  inner.appendChild(sideL);
+  inner.appendChild(grid);
+  inner.appendChild(sideR);
+  classroom.appendChild(inner);
+
+  const podRow = document.createElement('div');
+  podRow.className = 'podium-row';
+  podRow.innerHTML = '<div class="podium">교탁 · 칠판</div>';
+  classroom.appendChild(podRow);
+}
+
+function makeSeatEl(key, occupied, row) {
+  const seatEl = document.createElement('div');
+  seatEl.className = 'seat';
+  seatEl.dataset.key = key;
+
+  const numEl = document.createElement('div');
+  numEl.className = 'seat-num';
+  numEl.textContent = key.replace('-', '열') + '행';
+  seatEl.appendChild(numEl);
+
+  if (occupied) {
+    seatEl.classList.add('has-student');
+    if (occupied.isApplied) seatEl.classList.add('is-front');
+    if (key === selected) seatEl.classList.add('selected');
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'seat-name';
+    nameEl.textContent = occupied.name;
+    seatEl.appendChild(nameEl);
+
+    if (occupied.isApplied) {
+      const badge = document.createElement('div');
+      badge.className = 'seat-badge';
+      badge.textContent = '앞 신청';
+      seatEl.appendChild(badge);
+    }
+
+    seatEl.addEventListener('click', () => onSeatClick(key));
+  } else {
+    seatEl.classList.add('empty');
+  }
+
+  return seatEl;
+}
+
+// ─────────────────────────────────────────────
+// 좌석 클릭 처리
+// ─────────────────────────────────────────────
+function onSeatClick(key) {
+  if (!seatMap.get(key)) return; // 빈 자리 무시
+
+  if (selected === null) {
+    // 첫 번째 선택
+    selected = key;
+    updateSwapStatus();
+    refreshSeatEl(key);
+    document.getElementById('cancelBtn').disabled = false;
+
+  } else if (selected === key) {
+    // 같은 자리 재클릭 → 선택 취소
+    resetSelection();
+
+  } else {
+    // 두 번째 선택 → 교체 실행
+    doSwap(selected, key);
+  }
+}
+
+function doSwap(key1, key2) {
+  const data1 = seatMap.get(key1);
+  const data2 = seatMap.get(key2);
+
+  // 이력 저장 (교체 전 상태 전체 스냅샷)
+  swapHistory.push({
+    key1, name1: data1.name, applied1: data1.isApplied,
+    key2, name2: data2.name, applied2: data2.isApplied,
+  });
+
+  // 이름 + 앞자리 신청 여부 모두 교체 (학생에 귀속)
+  seatMap.set(key1, { name: data2.name, isApplied: data2.isApplied });
+  seatMap.set(key2, { name: data1.name, isApplied: data1.isApplied });
+
+  selected = null;
+  document.getElementById('cancelBtn').disabled = true;
+
+  refreshSeatEl(key1, true);
+  refreshSeatEl(key2, true);
+  updateSwapStatus();
+  renderHistory();
+  updateSwapCountBadge();
+}
+
+// DOM에서 해당 key의 좌석만 교체
+function refreshSeatEl(key, flash = false) {
+  const old = document.querySelector(`.seat[data-key="${key}"]`);
+  if (!old) return;
+  const [colId, row] = key.split('-').map(Number);
+  const occupied = seatMap.get(key);
+  const newEl = makeSeatEl(key, occupied, row);
+  if (flash) newEl.classList.add('flash');
+  old.replaceWith(newEl);
+}
+
+function resetSelection() {
+  const prev = selected;
+  selected = null;
+  document.getElementById('cancelBtn').disabled = true;
+  if (prev) refreshSeatEl(prev);
+  updateSwapStatus();
+}
+
+// ─────────────────────────────────────────────
+// 상태 바 / 이력
+// ─────────────────────────────────────────────
+function updateSwapStatus() {
+  const bar = document.getElementById('swapStatus');
+  bar.classList.add('visible');
+
+  const slot1El = document.getElementById('slot1');
+  const slot2El = document.getElementById('slot2');
+  const msgEl   = document.getElementById('swapMsg');
+
+  if (selected === null) {
+    slot1El.textContent = '선택 안 됨';
+    slot1El.classList.add('empty');
+    slot2El.textContent = '선택 안 됨';
+    slot2El.classList.add('empty');
+    msgEl.textContent = '교체할 첫 번째 학생을 클릭하세요';
+  } else {
+    const s = seatMap.get(selected);
+    slot1El.textContent = s ? s.name : '-';
+    slot1El.classList.remove('empty');
+    slot2El.textContent = '선택 안 됨';
+    slot2El.classList.add('empty');
+    msgEl.textContent = '교체할 두 번째 학생을 클릭하세요';
+  }
+}
+
+function renderHistory() {
+  const wrap = document.getElementById('historyWrap');
+  const list = document.getElementById('historyList');
+
+  if (swapHistory.length === 0) {
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  list.innerHTML = '';
+
+  // 최신순 렌더 - 가장 최근 항목에만 되돌리기 버튼 표시
+  [...swapHistory].reverse().forEach((h, revIdx) => {
+    const isLatest = revIdx === 0;
+    const item = document.createElement('div');
+    item.className = 'history-item';
+
+    // XSS 방지: textContent로 이름 삽입
+    const n1 = document.createElement('strong');
+    n1.textContent = h.name1;
+    const pos1 = document.createElement('span');
+    pos1.style.cssText = 'color:var(--text-faint);font-size:0.72rem;';
+    pos1.textContent = `${h.key1.replace('-','열')}행`;
+    const arrow = document.createElement('span');
+    arrow.textContent = '⇄';
+    const n2 = document.createElement('strong');
+    n2.textContent = h.name2;
+    const pos2 = document.createElement('span');
+    pos2.style.cssText = 'color:var(--text-faint);font-size:0.72rem;';
+    pos2.textContent = `${h.key2.replace('-','열')}행`;
+
+    item.appendChild(n1);
+    item.appendChild(pos1);
+    item.appendChild(arrow);
+    item.appendChild(n2);
+    item.appendChild(pos2);
+
+    // 되돌리기는 가장 최근 것만 허용 (중간 이력 되돌리기 시 상태 꼬임 방지)
+    if (isLatest) {
+      const undoBtn = document.createElement('button');
+      undoBtn.className = 'history-undo';
+      undoBtn.textContent = '되돌리기';
+      undoBtn.addEventListener('click', undoLatest);
+      item.appendChild(undoBtn);
+    }
+
+    list.appendChild(item);
+  });
+}
+
+// 가장 최근 교체만 되돌림
+function undoLatest() {
+  if (swapHistory.length === 0) return;
+  const h = swapHistory[swapHistory.length - 1];
+
+  seatMap.set(h.key1, { name: h.name1, isApplied: h.applied1 });
+  seatMap.set(h.key2, { name: h.name2, isApplied: h.applied2 });
+
+  swapHistory.pop();
+
+  selected = null;
+  document.getElementById('cancelBtn').disabled = true;
+
+  refreshSeatEl(h.key1, true);
+  refreshSeatEl(h.key2, true);
+  updateSwapStatus();
+  renderHistory();
+  updateSwapCountBadge();
+}
+
+function updateSwapCountBadge() {
+  const el = document.getElementById('swapCountBadge');
+  el.textContent = swapHistory.length > 0 ? `${swapHistory.length}회 교체됨` : '';
+}
+
+// ─────────────────────────────────────────────
+// CSV 다운로드
+// ─────────────────────────────────────────────
+function downloadCSV() {
+  const rows = [['열', '행', '이름', '앞자리신청']];
+
+  for (const col of COLS) {
+    for (let row = 1; row <= col.rows; row++) {
+      const key = `${col.id}-${row}`;
+      const occupied = seatMap.get(key);
+      rows.push([
+        `${col.id}열`,
+        `${row}행`,
+        occupied ? occupied.name : '',
+        occupied ? (occupied.isApplied ? 'O' : 'X') : ''
+      ]);
+    }
+  }
+
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\r\n');
+  const today = new Date();
+  const d = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `seating_${d}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+</script>
+</body>
+</html>

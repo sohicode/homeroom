@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청소 당번 교체</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F1;
+    --surface: #FFFFFF;
+    --surface2: #F0EFE9;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1A18;
+    --text-muted: #6B6A65;
+    --text-faint: #A5A49F;
+    --accent: #2A2A27;
+    --accent-fg: #F7F6F1;
+    --radius: 10px;
+    --radius-sm: 6px;
+
+    --select-bg: #FAEEDA;
+    --select-border: #EF9F27;
+    --select-text: #633806;
+
+    --chief-bg: #FCEBEB;
+    --chief-border: rgba(163,45,45,0.25);
+    --chief-text: #791F1F;
+
+    --flash-bg: #EAF3DE;
+    --flash-border: #639922;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex; align-items: baseline; gap: 1rem;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+  header span { font-size: 0.8rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-fg);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; flex-shrink: 0;
+  }
+
+  .card-header h2 { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+  .card-body { padding: 1.25rem; }
+
+  /* 업로드 */
+  .upload-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 2rem 1rem; text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .upload-zone:hover { background: var(--surface2); border-color: var(--accent); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { width: 36px; height: 36px; margin: 0 auto 0.75rem; opacity: 0.3; }
+  .upload-main { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
+  .upload-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+  .format-box {
+    margin-top: 1rem; background: var(--surface2);
+    border-radius: var(--radius-sm); padding: 0.75rem 1rem;
+    font-size: 0.78rem; color: var(--text-muted); line-height: 1.8;
+  }
+  .format-box code {
+    font-family: 'DM Mono', monospace; font-size: 0.78rem;
+    color: var(--text); background: var(--surface);
+    padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  .error-msg {
+    margin-top: 0.75rem; padding: 0.6rem 0.9rem;
+    background: #FCEBEB; color: #791F1F;
+    border-radius: var(--radius-sm); font-size: 0.8rem; display: none;
+  }
+
+  /* 버튼 */
+  button {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.875rem; font-weight: 500;
+    border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+    padding: 0.55rem 1.1rem; cursor: pointer;
+    background: var(--surface); color: var(--text);
+    transition: background 0.12s, transform 0.08s; white-space: nowrap;
+  }
+  button:hover { background: var(--surface2); }
+  button:active { transform: scale(0.97); }
+  button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  button.primary:hover { background: #3A3A36; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* 교체 상태 바 */
+  .swap-status {
+    display: none; align-items: center; gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--select-bg);
+    border: 1px solid var(--select-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem; flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .swap-status.visible { display: flex; }
+  .swap-slot { display: flex; align-items: center; gap: 6px; }
+  .swap-slot-label { font-size: 0.72rem; font-family: 'DM Mono', monospace; color: var(--text-faint); }
+  .swap-slot-name { font-weight: 700; color: var(--select-text); font-size: 0.9rem; }
+  .swap-slot-name.empty { color: var(--text-faint); font-weight: 400; font-style: italic; }
+  .swap-arrow { font-size: 1rem; color: var(--select-text); opacity: 0.5; }
+  .swap-status-msg { font-size: 0.78rem; color: var(--select-text); margin-left: auto; }
+
+  /* 요일별 테이블 */
+  .day-section { margin-bottom: 1.25rem; }
+
+  .day-header {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .day-pill {
+    display: inline-block; border-radius: 100px;
+    padding: 3px 12px; font-size: 0.8rem; font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .day-members {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 0.75rem;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    min-height: 52px;
+  }
+
+  /* 이름 버튼 */
+  .name-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.82rem; font-weight: 400;
+    border: 1px solid var(--border);
+    border-radius: 100px; padding: 4px 12px;
+    cursor: pointer; background: var(--surface);
+    color: var(--text-muted);
+    transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.08s;
+    white-space: nowrap;
+  }
+  .name-btn:hover {
+    background: var(--surface); border-color: var(--border-strong); color: var(--text);
+  }
+  .name-btn:active { transform: scale(0.95); }
+
+  .name-btn.is-chief {
+    background: var(--chief-bg); color: var(--chief-text);
+    border-color: var(--chief-border); font-weight: 700;
+  }
+  .name-btn.is-chief::after {
+    content: ' 부장'; font-size: 0.68rem; font-weight: 400; opacity: 0.75;
+  }
+  .name-btn.is-chief:hover {
+    background: #F7C1C1; border-color: rgba(163,45,45,0.4);
+  }
+
+  .name-btn.selected {
+    background: var(--select-bg) !important;
+    border-color: var(--select-border) !important;
+    border-width: 2px;
+    color: var(--select-text) !important;
+    font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(239,159,39,0.2);
+    transform: scale(1.05);
+  }
+
+  .name-btn.flash {
+    animation: flashSwap 0.5s ease;
+  }
+  @keyframes flashSwap {
+    0%   { background: var(--flash-bg); border-color: var(--flash-border); }
+    100% { }
+  }
+
+  /* 교체 이력 */
+  .history-wrap { margin-top: 1rem; display: none; }
+  .history-label {
+    font-size: 0.72rem; font-weight: 500; color: var(--text-faint);
+    letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .history-list { display: flex; flex-direction: column; gap: 4px; }
+  .history-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; color: var(--text-muted);
+    padding: 4px 8px; background: var(--surface2);
+    border-radius: var(--radius-sm);
+  }
+  .history-item strong { color: var(--text); font-weight: 700; }
+  .history-item .day-tag {
+    font-size: 0.68rem; font-family: 'DM Mono', monospace;
+    color: var(--text-faint);
+  }
+  .history-undo {
+    margin-left: auto; font-size: 0.72rem;
+    font-family: 'DM Mono', monospace; color: var(--text-faint);
+    cursor: pointer; padding: 2px 6px;
+    border-radius: 3px; border: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.1s, color 0.1s;
+  }
+  .history-undo:hover { background: #FCEBEB; color: #791F1F; border-color: rgba(163,45,45,0.3); }
+
+  .result-actions {
+    display: flex; gap: 0.75rem;
+    margin-top: 1.25rem; padding-top: 1.25rem;
+    border-top: 1px solid var(--border); flex-wrap: wrap; align-items: center;
+  }
+  .swap-count-badge {
+    margin-left: auto; font-size: 0.78rem;
+    font-family: 'DM Mono', monospace; color: var(--text-faint);
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 1rem; }
+    .container { padding: 1rem; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>청소 당번 교체</h1>
+  <span>클릭 두 번으로 당번 맞교환</span>
+</header>
+
+<div class="container">
+
+  <!-- Step 1: CSV 업로드 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="step-num">1</div>
+      <h2>기존 청소 당번 CSV 업로드</h2>
+    </div>
+    <div class="card-body">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="csvInput" accept=".csv,.txt">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4-4 4 4"/>
+        </svg>
+        <div class="upload-main">cleaning_YYYYMMDD.csv 파일 업로드</div>
+        <div class="upload-sub">cleaning_schedule.html에서 다운로드한 CSV 파일</div>
+      </div>
+
+      <div class="format-box">
+        <strong>CSV 형식</strong> (cleaning_schedule.html 출력 형식 그대로)<br>
+        <code>"요일","역할","이름"</code><br>
+        예: <code>"월요일","당번","홍길동"</code> / <code>"월요일","청소 부장","김철수"</code>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: 교체 -->
+  <div class="card" id="swapCard" style="display:none;">
+    <div class="card-header">
+      <div class="step-num">2</div>
+      <h2>당번 교체</h2>
+    </div>
+    <div class="card-body">
+
+      <div class="swap-status" id="swapStatus">
+        <div class="swap-slot">
+          <span class="swap-slot-label">1번째</span>
+          <span class="swap-slot-name empty" id="slot1">선택 안 됨</span>
+        </div>
+        <span class="swap-arrow">⇄</span>
+        <div class="swap-slot">
+          <span class="swap-slot-label">2번째</span>
+          <span class="swap-slot-name empty" id="slot2">선택 안 됨</span>
+        </div>
+        <span class="swap-status-msg" id="swapMsg">교체할 첫 번째 학생을 클릭하세요</span>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-faint);margin-bottom:0.75rem;">
+        💡 클릭 두 번으로 교체 · 더블클릭으로 부장 지정/해제
+      </div>
+
+      <div id="dayList"></div>
+
+      <!-- 교체 이력 -->
+      <div class="history-wrap" id="historyWrap">
+        <div class="history-label">교체 이력</div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <div class="result-actions">
+        <button class="primary" onclick="downloadCSV()">CSV 다운로드</button>
+        <button onclick="resetSelection()" id="cancelBtn" disabled>선택 취소</button>
+        <span class="swap-count-badge" id="swapCountBadge"></span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DAYS = ['월','화','수','목','금'];
+const DAY_COLORS = [
+  { bg: '#E6F1FB', text: '#0C447C' },
+  { bg: '#EAF3DE', text: '#27500A' },
+  { bg: '#FAEEDA', text: '#633806' },
+  { bg: '#EEEDFE', text: '#3C3489' },
+  { bg: '#FAECE7', text: '#712B13' },
+];
+
+// schedule: { 월: [{name, isChief}], 화: [...], ... }
+let schedule = {};
+let selected = null;  // { day, name } | null
+let swapHistory = [];
+
+// ─────────────────────────────────────────────
+// 파일 처리
+// ─────────────────────────────────────────────
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background = '#F0EFE9'; });
+zone.addEventListener('dragleave', () => { zone.style.background = ''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.style.background = '';
+  if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+});
+document.getElementById('csvInput').addEventListener('change', e => {
+  if (e.target.files[0]) readFile(e.target.files[0]);
+});
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => parseCSV(ev.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.trim().split(/\r?\n/).filter(l => l.trim());
+
+  // 헤더 행 스킵
+  const dataLines = (lines[0].includes('요일') && lines[0].includes('역할'))
+    ? lines.slice(1) : lines;
+
+  const newSchedule = {};
+  DAYS.forEach(d => newSchedule[d] = []);
+  const errors = [];
+
+  dataLines.forEach((line, i) => {
+    const parts = line.split(',').map(p => p.replace(/^"|"$/g, '').trim());
+    if (parts.length < 3) { errors.push(`줄 ${i+2}: 컬럼 수 부족`); return; }
+
+    const dayStr  = parts[0]; // "월요일"
+    const role    = parts[1]; // "당번" or "청소 부장"
+    const name    = parts[2];
+
+    if (!name) return; // 빈 이름 스킵
+
+    // "월요일" → "월"
+    const day = DAYS.find(d => dayStr.startsWith(d));
+    if (!day) { errors.push(`줄 ${i+2}: 요일 파싱 오류 → "${dayStr}"`); return; }
+
+    newSchedule[day].push({ name, isChief: role === '청소 부장' });
+  });
+
+  if (errors.length) {
+    errEl.textContent = errors.join(' | ');
+    errEl.style.display = 'block';
+  }
+
+  const totalStudents = DAYS.reduce((s, d) => s + newSchedule[d].length, 0);
+  if (totalStudents === 0) {
+    if (!errors.length) {
+      errEl.textContent = '학생 데이터를 찾을 수 없습니다. 파일 형식을 확인해 주세요.';
+      errEl.style.display = 'block';
+    }
+    document.getElementById('swapCard').style.display = 'none';
+    return;
+  }
+
+  schedule = newSchedule;
+  selected = null;
+  swapHistory = [];
+  document.getElementById('cancelBtn').disabled = true;
+
+  document.getElementById('swapCard').style.display = 'block';
+  renderAll();
+  updateSwapStatus();
+  renderHistory();
+  document.getElementById('swapCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ─────────────────────────────────────────────
+// 렌더링
+// ─────────────────────────────────────────────
+function renderAll() {
+  const dayList = document.getElementById('dayList');
+  dayList.innerHTML = '';
+
+  DAYS.forEach((day, i) => {
+    const members = schedule[day];
+    if (!members || members.length === 0) return;
+
+    const color = DAY_COLORS[i];
+    const section = document.createElement('div');
+    section.className = 'day-section';
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    const pill = document.createElement('span');
+    pill.className = 'day-pill';
+    pill.style.background = color.bg;
+    pill.style.color = color.text;
+    pill.textContent = `${day}요일`;
+    const countSpan = document.createElement('span');
+    countSpan.style.cssText = 'font-size:0.72rem;color:var(--text-faint);font-family:"DM Mono",monospace;';
+    countSpan.textContent = `${members.length}명`;
+    header.appendChild(pill);
+    header.appendChild(countSpan);
+
+    const membersDiv = document.createElement('div');
+    membersDiv.className = 'day-members';
+    membersDiv.dataset.day = day;
+
+    members.forEach(m => {
+      membersDiv.appendChild(makeNameBtn(day, m));
+    });
+
+    section.appendChild(header);
+    section.appendChild(membersDiv);
+    dayList.appendChild(section);
+  });
+}
+
+function makeNameBtn(day, member) {
+  const btn = document.createElement('button');
+  btn.className = 'name-btn';
+  if (member.isChief) btn.classList.add('is-chief');
+  if (selected && selected.day === day && selected.name === member.name) {
+    btn.classList.add('selected');
+  }
+  btn.dataset.day = day;
+  btn.dataset.name = member.name;
+  btn.textContent = member.name;
+
+  // 싱글클릭: 교체 선택
+  btn.addEventListener('click', () => onNameClick(day, member.name));
+
+  // 더블클릭: 부장 토글 (싱글클릭 선택 상태도 초기화)
+  btn.addEventListener('dblclick', e => {
+    e.stopPropagation(); // 싱글클릭 이벤트 중복 방지
+    resetSelection();
+    toggleChief(day, member.name);
+  });
+
+  return btn;
+}
+
+function refreshBtn(day, name, flash = false) {
+  const btn = document.querySelector(`.name-btn[data-day="${day}"][data-name="${CSS.escape(name)}"]`);
+  if (!btn) return;
+  const member = schedule[day].find(m => m.name === name);
+  if (!member) return;
+  const newBtn = makeNameBtn(day, member);
+  if (flash) newBtn.classList.add('flash');
+  btn.replaceWith(newBtn);
+}
+
+// ─────────────────────────────────────────────
+// 클릭 처리
+// ─────────────────────────────────────────────
+function onNameClick(day, name) {
+  if (selected === null) {
+    selected = { day, name };
+    updateSwapStatus();
+    refreshBtn(day, name);
+    document.getElementById('cancelBtn').disabled = false;
+
+  } else if (selected.day === day && selected.name === name) {
+    resetSelection();
+
+  } else {
+    doSwap(selected.day, selected.name, day, name);
+  }
+}
+
+function doSwap(day1, name1, day2, name2) {
+  const members1 = schedule[day1];
+  const members2 = schedule[day2];
+
+  const idx1 = members1.findIndex(m => m.name === name1);
+  const idx2 = members2.findIndex(m => m.name === name2);
+  if (idx1 === -1 || idx2 === -1) return;
+
+  const data1 = { ...members1[idx1] };
+  const data2 = { ...members2[idx2] };
+
+  // 이력 저장
+  swapHistory.push({ day1, name1, isChief1: data1.isChief, day2, name2, isChief2: data2.isChief });
+
+  // 이름만 교체 - isChief는 자리(요일 위치)에 귀속
+  members1[idx1] = { name: data2.name, isChief: data1.isChief };
+  members2[idx2] = { name: data1.name, isChief: data2.isChief };
+
+  // data-name 속성 갱신
+  const btn1 = document.querySelector(`.name-btn[data-day="${day1}"][data-name="${CSS.escape(name1)}"]`);
+  const btn2 = document.querySelector(`.name-btn[data-day="${day2}"][data-name="${CSS.escape(name2)}"]`);
+  if (btn1) btn1.dataset.name = data2.name;
+  if (btn2) btn2.dataset.name = data1.name;
+
+  selected = null;
+  document.getElementById('cancelBtn').disabled = true;
+
+  refreshBtn(day1, data2.name, true);
+  refreshBtn(day2, data1.name, true);
+  updateSwapStatus();
+  renderHistory();
+  updateSwapCountBadge();
+}
+
+// 더블클릭으로 부장 토글
+function toggleChief(day, name) {
+  const members = schedule[day];
+  const idx = members.findIndex(m => m.name === name);
+  if (idx === -1) return;
+
+  const willBeChief = !members[idx].isChief;
+
+  // 같은 요일에 부장이 이미 있으면 해제 후 새로 지정
+  if (willBeChief) {
+    members.forEach((m, i) => { if (m.isChief) members[i].isChief = false; });
+  }
+  members[idx].isChief = willBeChief;
+
+  // 해당 요일 버튼 전체 갱신
+  const memberDiv = document.querySelector(`.day-members[data-day="${day}"]`);
+  if (memberDiv) {
+    memberDiv.innerHTML = '';
+    members.forEach(m => memberDiv.appendChild(makeNameBtn(day, m)));
+  }
+}
+
+function resetSelection() {
+  const prev = selected;
+  selected = null;
+  document.getElementById('cancelBtn').disabled = true;
+  if (prev) refreshBtn(prev.day, prev.name);
+  updateSwapStatus();
+}
+
+// ─────────────────────────────────────────────
+// 상태 바 / 이력
+// ─────────────────────────────────────────────
+function updateSwapStatus() {
+  document.getElementById('swapStatus').classList.add('visible');
+  const slot1El = document.getElementById('slot1');
+  const slot2El = document.getElementById('slot2');
+  const msgEl   = document.getElementById('swapMsg');
+
+  if (selected === null) {
+    slot1El.textContent = '선택 안 됨'; slot1El.classList.add('empty');
+    slot2El.textContent = '선택 안 됨'; slot2El.classList.add('empty');
+    msgEl.textContent = '교체할 첫 번째 학생을 클릭하세요';
+  } else {
+    slot1El.textContent = `${selected.name} (${selected.day}요일)`;
+    slot1El.classList.remove('empty');
+    slot2El.textContent = '선택 안 됨'; slot2El.classList.add('empty');
+    msgEl.textContent = '교체할 두 번째 학생을 클릭하세요';
+  }
+}
+
+function renderHistory() {
+  const wrap = document.getElementById('historyWrap');
+  const list = document.getElementById('historyList');
+
+  if (swapHistory.length === 0) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'block';
+  list.innerHTML = '';
+
+  [...swapHistory].reverse().forEach((h, revIdx) => {
+    const isLatest = revIdx === 0;
+    const item = document.createElement('div');
+    item.className = 'history-item';
+
+    const n1 = document.createElement('strong'); n1.textContent = h.name1;
+    const d1 = document.createElement('span'); d1.className = 'day-tag'; d1.textContent = `(${h.day1}요일)`;
+    const arrow = document.createElement('span'); arrow.textContent = '⇄';
+    const n2 = document.createElement('strong'); n2.textContent = h.name2;
+    const d2 = document.createElement('span'); d2.className = 'day-tag'; d2.textContent = `(${h.day2}요일)`;
+
+    item.appendChild(n1); item.appendChild(d1);
+    item.appendChild(arrow);
+    item.appendChild(n2); item.appendChild(d2);
+
+    if (isLatest) {
+      const undoBtn = document.createElement('button');
+      undoBtn.className = 'history-undo';
+      undoBtn.textContent = '되돌리기';
+      undoBtn.addEventListener('click', undoLatest);
+      item.appendChild(undoBtn);
+    }
+
+    list.appendChild(item);
+  });
+}
+
+function undoLatest() {
+  if (swapHistory.length === 0) return;
+  const h = swapHistory[swapHistory.length - 1];
+
+  const members1 = schedule[h.day1];
+  const members2 = schedule[h.day2];
+
+  // 교체 후 day1에는 name2가, day2에는 name1이 있음
+  const cur1 = members1.findIndex(m => m.name === h.name2);
+  const cur2 = members2.findIndex(m => m.name === h.name1);
+
+  // 이름만 원복 - isChief는 자리 귀속이므로 현재 값 유지
+  if (cur1 !== -1) members1[cur1] = { name: h.name1, isChief: members1[cur1].isChief };
+  if (cur2 !== -1) members2[cur2] = { name: h.name2, isChief: members2[cur2].isChief };
+
+  swapHistory.pop();
+  selected = null;
+  document.getElementById('cancelBtn').disabled = true;
+
+  // data-name 갱신 후 버튼 refresh
+  const btn1 = document.querySelector(`.name-btn[data-day="${h.day1}"][data-name="${CSS.escape(h.name2)}"]`);
+  const btn2 = document.querySelector(`.name-btn[data-day="${h.day2}"][data-name="${CSS.escape(h.name1)}"]`);
+  if (btn1) btn1.dataset.name = h.name1;
+  if (btn2) btn2.dataset.name = h.name2;
+
+  refreshBtn(h.day1, h.name1, true);
+  refreshBtn(h.day2, h.name2, true);
+  updateSwapStatus();
+  renderHistory();
+  updateSwapCountBadge();
+}
+
+function updateSwapCountBadge() {
+  const el = document.getElementById('swapCountBadge');
+  el.textContent = swapHistory.length > 0 ? `${swapHistory.length}회 교체됨` : '';
+}
+
+// ─────────────────────────────────────────────
+// CSV 다운로드
+// ─────────────────────────────────────────────
+function downloadCSV() {
+  const rows = [['요일', '역할', '이름']];
+  DAYS.forEach(day => {
+    (schedule[day] || []).forEach(m => {
+      rows.push([`${day}요일`, m.isChief ? '청소 부장' : '당번', m.name]);
+    });
+  });
+
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\r\n');
+  const today = new Date();
+  const d = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cleaning_${d}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+</script>
+</body>
+</html>

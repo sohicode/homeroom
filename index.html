@@ -130,13 +130,9 @@
     font-size: 22px;
   }
 
-  .card-icon.cleaning {
-    background: #EAF3DE;
-  }
-
-  .card-icon.seating {
-    background: #E6F1FB;
-  }
+  .card-icon.cleaning { background: #EAF3DE; }
+  .card-icon.seating  { background: #E6F1FB; }
+  .card-icon.swap     { background: #FAEEDA; }
 
   .card-text {
     flex: 1;
@@ -212,7 +208,7 @@
   <div class="hero">
     <div class="hero-label">homeroom</div>
     <div class="hero-title">우리반<span> 관리</span></div>
-    <div class="hero-sub">청소 당번 · 좌석 배치를 간편하게</div>
+    <div class="hero-sub">청소 당번 · 좌석 배치 · 교체를 간편하게</div>
   </div>
 
   <div class="cards">
@@ -223,10 +219,19 @@
         <div class="card-title">청소 당번 배치표</div>
         <div class="card-desc">불가 요일 제외 · 요일별 균등 배치<br>청소 부장 지정 · CSV 다운로드</div>
       </div>
-      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18l6-6-6-6"/>
-      </svg>
+      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </a>
+
+    <a class="card-link" href="https://sohicode.github.io/homeroom/cleaning_swap/">
+      <div class="card-icon swap">🔄</div>
+      <div class="card-text">
+        <div class="card-title">청소 당번 교체</div>
+        <div class="card-desc">기존 배치 CSV 업로드 · 클릭 두 번으로 교체<br>더블클릭으로 부장 지정 · CSV 다운로드</div>
+      </div>
+      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+
+    <div class="divider"><span>좌석</span></div>
 
     <a class="card-link" href="https://sohicode.github.io/homeroom/seating_chart/">
       <div class="card-icon seating">🪑</div>
@@ -234,9 +239,16 @@
         <div class="card-title">좌석 배치표</div>
         <div class="card-desc">앞자리 신청자 우선 배치 · 5열 28석<br>랜덤 배치 · CSV 다운로드</div>
       </div>
-      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18l6-6-6-6"/>
-      </svg>
+      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+
+    <a class="card-link" href="https://sohicode.github.io/homeroom/seating_swap/">
+      <div class="card-icon swap">🔄</div>
+      <div class="card-text">
+        <div class="card-title">좌석 교체</div>
+        <div class="card-desc">기존 배치 CSV 업로드 · 클릭 두 번으로 교체<br>되돌리기 · CSV 다운로드</div>
+      </div>
+      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </a>
 
   </div>

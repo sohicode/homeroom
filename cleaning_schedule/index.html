@@ -471,7 +471,6 @@
     <div class="card-body">
       <div class="action-row">
         <button class="primary" onclick="assign()">랜덤 배치 실행</button>
-        <button onclick="assign()" id="reshuffleBtn" style="display:none;">다시 섞기</button>
         <button onclick="downloadCSV()" id="downloadBtn" style="display:none;">CSV 다운로드</button>
       </div>
       <div class="notice" style="margin-top:1rem;">
@@ -718,25 +717,35 @@ function renderResult(assignment, chiefs) {
 
     const tr = document.createElement('tr');
 
-    // 이름 버튼 생성
-    const nameBtns = members.map(name => {
+    // 이름 버튼 - XSS 방지: 버튼 텍스트도 textContent로 처리
+    const memberListDiv = document.createElement('div');
+    memberListDiv.className = 'member-list';
+    members.forEach(name => {
       const isChief = name === chief;
-      const safeDay = d;
-      return `<button class="name-btn${isChief ? ' is-chief' : ''}" data-day="${safeDay}" data-name="${name.replace(/"/g, '&quot;')}" title="${isChief ? '부장 해제' : '부장으로 지정'}">${name}</button>`;
-    }).join('');
+      const btn = document.createElement('button');
+      btn.className = 'name-btn' + (isChief ? ' is-chief' : '');
+      btn.dataset.day = d;
+      btn.dataset.name = name;
+      btn.title = isChief ? '부장 해제' : '부장으로 지정';
+      btn.textContent = name;
+      memberListDiv.appendChild(btn);
+    });
 
-    tr.innerHTML = `
-      <td><span class="day-pill" style="background:${color.bg};color:${color.text};">${d}요일</span></td>
-      <td>
-        <div class="member-list">${nameBtns}</div>
-      </td>
-      <td class="count-num">${members.length}명</td>
-    `;
+    const tdDay = document.createElement('td');
+    tdDay.innerHTML = `<span class="day-pill" style="background:${color.bg};color:${color.text};">${d}요일</span>`;
+    const tdMembers = document.createElement('td');
+    tdMembers.appendChild(memberListDiv);
+    const tdCount = document.createElement('td');
+    tdCount.className = 'count-num';
+    tdCount.textContent = `${members.length}명`;
+
+    tr.appendChild(tdDay);
+    tr.appendChild(tdMembers);
+    tr.appendChild(tdCount);
     tbody.appendChild(tr);
   });
 
   document.getElementById('resultCard').style.display = 'block';
-  document.getElementById('reshuffleBtn').style.display = 'inline-block';
   document.getElementById('downloadBtn').style.display = 'inline-block';
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -754,17 +763,17 @@ function downloadCSV() {
 
   const bom = '\uFEFF';
   const csvContent = bom + rows.map(r => r.map(cell => `"${cell}"`).join(',')).join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-
   const today = new Date();
   const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
-
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `청소당번_${dateStr}.csv`;
+  a.download = `cleaning_${dateStr}.csv`;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 </script>
 </body>
