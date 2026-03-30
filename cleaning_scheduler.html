@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청소 당번 배치</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F1;
+    --surface: #FFFFFF;
+    --surface2: #F0EFE9;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1A18;
+    --text-muted: #6B6A65;
+    --text-faint: #A5A49F;
+    --accent: #2A2A27;
+    --accent-fg: #F7F6F1;
+    --radius: 10px;
+    --radius-sm: 6px;
+
+    --mon: #E6F1FB; --mon-t: #0C447C;
+    --tue: #EAF3DE; --tue-t: #27500A;
+    --wed: #FAEEDA; --wed-t: #633806;
+    --thu: #EEEDFE; --thu-t: #3C3489;
+    --fri: #FAECE7; --fri-t: #712B13;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .card-header h2 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    position: relative;
+  }
+
+  .upload-zone:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+  }
+
+  .upload-zone input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .upload-icon {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 0.75rem;
+    opacity: 0.3;
+  }
+
+  .upload-main {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+
+  .upload-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .format-box {
+    margin-top: 1rem;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .format-box code {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    background: var(--surface);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  .error-msg {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    background: #FCEBEB;
+    color: #791F1F;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    display: none;
+  }
+
+  .preview-wrap {
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .preview-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .chip-unavail {
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.12s, transform 0.08s;
+    white-space: nowrap;
+  }
+
+  button:hover { background: var(--surface2); }
+  button:active { transform: scale(0.97); }
+
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+
+  button.primary:hover { background: #3A3A36; }
+
+  button:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: -0.02em;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  thead th {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-faint);
+    text-align: left;
+    padding: 0.5rem 0.875rem;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody td {
+    padding: 0.875rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr {
+    transition: background 0.1s;
+  }
+
+  tbody tr:hover {
+    background: var(--surface2);
+  }
+
+  .day-pill {
+    display: inline-block;
+    border-radius: 100px;
+    padding: 3px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .member-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .name-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 400;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 3px 11px;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--text-muted);
+    transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.08s;
+    white-space: nowrap;
+  }
+
+  .name-btn:hover {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
+  .name-btn.is-chief:hover {
+    background: #F7C1C1;
+    border-color: rgba(163,45,45,0.4);
+    color: #791F1F;
+  }
+
+  .name-btn:active { transform: scale(0.95); }
+
+  .name-btn.is-chief {
+    background: #FCEBEB;
+    color: #791F1F;
+    border-color: rgba(163,45,45,0.25);
+    font-weight: 700;
+  }
+
+  .name-btn.is-chief::after {
+    content: ' 부장';
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.75;
+  }
+
+  .count-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: right;
+    vertical-align: middle;
+  }
+
+  .warn-msg {
+    margin: 0.75rem 0 0;
+    padding: 0.6rem 0.9rem;
+    background: #FAEEDA;
+    color: #633806;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    display: none;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .notice {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .notice strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 1rem 1.25rem; }
+    .container { padding: 1rem; gap: 1rem; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    thead th:nth-child(1) { width: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>청소 당번 배치</h1>
+  <span>월~금 자동 균등 배분</span>
+</header>
+
+<div class="container">
+
+  <!-- Step 1: 파일 업로드 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="step-num">1</div>
+      <h2>학생 목록 업로드</h2>
+    </div>
+    <div class="card-body">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="csvInput" accept=".csv,.txt" onchange="handleFile(event)">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4-4 4 4"/>
+        </svg>
+        <div class="upload-main">파일을 클릭하거나 드래그해서 업로드</div>
+        <div class="upload-sub">.csv 또는 .txt 파일 지원</div>
+      </div>
+
+      <div class="format-box">
+        <strong>CSV 형식 안내</strong><br>
+        한 줄에 한 명씩: <code>이름,불가요일</code><br>
+        예시: <code>홍길동,월수</code> → 월·수 불가 &nbsp;|&nbsp; <code>김철수,</code> → 불가 요일 없음<br>
+        불가 요일: 월·화·수·목·금 중 붙여서 입력 (예: <code>월목금</code>)
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="preview-wrap" id="previewWrap">
+        <div class="preview-label">불러온 학생 <span id="studentCount">0</span>명</div>
+        <div class="chips" id="chipsEl"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: 배치 실행 -->
+  <div class="card" id="actionCard" style="display:none;">
+    <div class="card-header">
+      <div class="step-num">2</div>
+      <h2>배치 실행</h2>
+    </div>
+    <div class="card-body">
+      <div class="action-row">
+        <button class="primary" onclick="assign()">랜덤 배치 실행</button>
+        <button onclick="assign()" id="reshuffleBtn" style="display:none;">다시 섞기</button>
+        <button onclick="downloadCSV()" id="downloadBtn" style="display:none;">CSV 다운로드</button>
+      </div>
+      <div class="notice" style="margin-top:1rem;">
+        <strong>배치 규칙</strong><br>
+        불가 요일 제외 후, 요일별 인원 차이가 최대 1명 이내로 균등 배치합니다. (25명 → 5명×5일)<br>
+        배치 후 각 이름을 클릭하면 청소 부장으로 지정/해제할 수 있습니다.
+      </div>
+      <div class="warn-msg" id="warnMsg"></div>
+    </div>
+  </div>
+
+  <!-- Step 3: 결과 -->
+  <div class="card" id="resultCard" style="display:none;">
+    <div class="card-header">
+      <div class="step-num">3</div>
+      <h2>배치 결과</h2>
+    </div>
+    <div class="card-body">
+      <div class="warn-msg" id="warnMsgResult"></div>
+      <div class="stats-row" id="statsRow"></div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:72px;">요일</th>
+            <th>당번 (이름 클릭 → 부장 지정/해제)</th>
+            <th style="width:52px; text-align:right;">인원</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+      <div class="result-actions">
+        <button class="primary" onclick="assign()">다시 섞기</button>
+        <button onclick="downloadCSV()">CSV 다운로드</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DAYS = ['월','화','수','목','금'];
+const DAY_COLORS = [
+  { bg: '#E6F1FB', text: '#0C447C' },
+  { bg: '#EAF3DE', text: '#27500A' },
+  { bg: '#FAEEDA', text: '#633806' },
+  { bg: '#EEEDFE', text: '#3C3489' },
+  { bg: '#FAECE7', text: '#712B13' },
+];
+
+let students = [];
+let lastAssignment = null;
+let lastChiefs = null;
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background = '#F0EFE9'; });
+zone.addEventListener('dragleave', () => { zone.style.background = ''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.style.background = '';
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
+});
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (file) readFile(file);
+}
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => parseCSV(ev.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  const parsed = [];
+  const errors = [];
+
+  lines.forEach((line, i) => {
+    const commaIdx = line.indexOf(',');
+    if (commaIdx === -1) {
+      errors.push(`줄 ${i+1}: 쉼표(,)가 없습니다 → "${line}"`);
+      return;
+    }
+    const name = line.slice(0, commaIdx).trim();
+    const unavailStr = line.slice(commaIdx + 1).trim();
+    if (!name) { errors.push(`줄 ${i+1}: 이름이 비어있습니다`); return; }
+    const unavail = [];
+    for (const ch of unavailStr) {
+      if (DAYS.includes(ch) && !unavail.includes(ch)) unavail.push(ch);
+    }
+    parsed.push({ name, unavail });
+  });
+
+  if (errors.length) {
+    errEl.textContent = errors.join(' | ');
+    errEl.style.display = 'block';
+  }
+
+  students = parsed;
+  renderPreview();
+}
+
+function renderPreview() {
+  const chips = document.getElementById('chipsEl');
+  const count = document.getElementById('studentCount');
+  const wrap = document.getElementById('previewWrap');
+  const actionCard = document.getElementById('actionCard');
+
+  chips.innerHTML = '';
+  students.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = s.name + (s.unavail.length
+      ? `<span class="chip-unavail">${s.unavail.join('')}불가</span>`
+      : '');
+    chips.appendChild(chip);
+  });
+
+  count.textContent = students.length;
+  wrap.style.display = students.length ? 'block' : 'none';
+  actionCard.style.display = students.length ? 'block' : 'none';
+  document.getElementById('resultCard').style.display = 'none';
+  lastAssignment = null;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function assign() {
+  if (!students.length) return;
+
+  const warnEl = document.getElementById('warnMsg');
+  const warnEl2 = document.getElementById('warnMsgResult');
+  warnEl.style.display = 'none';
+  warnEl2.style.display = 'none';
+
+  const total = students.length;
+  const nDays = DAYS.length;
+  const base = Math.floor(total / nDays);
+  const extra = total % nDays;
+
+  const MAX_TRY = 200;
+  let assignment = null;
+  let warnText = '';
+
+  for (let attempt = 0; attempt < MAX_TRY; attempt++) {
+    const tryAssign = {};
+    DAYS.forEach(d => tryAssign[d] = []);
+
+    const dayOrder = shuffle([...Array(nDays).keys()]);
+    const quotas = {};
+    dayOrder.forEach((di, rank) => {
+      quotas[DAYS[di]] = base + (rank < extra ? 1 : 0);
+    });
+
+    const shuffled = shuffle(students);
+    let ok = true;
+
+    for (const s of shuffled) {
+      const primary = DAYS.filter(d => !s.unavail.includes(d) && tryAssign[d].length < quotas[d]);
+      if (primary.length) {
+        primary.sort((a, b) => tryAssign[a].length - tryAssign[b].length);
+        tryAssign[primary[0]].push(s.name);
+      } else {
+        const fallback = DAYS.filter(d => !s.unavail.includes(d));
+        if (!fallback.length) { ok = false; break; }
+        fallback.sort((a, b) => tryAssign[a].length - tryAssign[b].length);
+        tryAssign[fallback[0]].push(s.name);
+        ok = false;
+      }
+    }
+
+    const counts = DAYS.map(d => tryAssign[d].length);
+    const minC = Math.min(...counts), maxC = Math.max(...counts);
+    if (ok && maxC - minC <= 1) {
+      assignment = tryAssign;
+      warnText = '';
+      break;
+    }
+    if (attempt === MAX_TRY - 1) {
+      assignment = tryAssign;
+      const diff = maxC - minC;
+      if (diff > 1) {
+        warnText = `⚠ 불가 요일 제약으로 완전 균등 배치가 어렵습니다. (최대 차이: ${diff}명) CSV를 검토해 주세요.`;
+      }
+    }
+  }
+
+  if (warnText) {
+    warnEl.textContent = warnText;
+    warnEl.style.display = 'block';
+    warnEl2.textContent = warnText;
+    warnEl2.style.display = 'block';
+  }
+
+  lastAssignment = assignment;
+  lastChiefs = {};
+  renderResult(assignment, lastChiefs);
+}
+
+function toggleChief(day, name) {
+  if (!lastChiefs) return;
+  lastChiefs[day] = (lastChiefs[day] === name) ? null : name;
+  renderResult(lastAssignment, lastChiefs);
+}
+
+// 이벤트 위임: tbody 클릭 → data-day, data-name 속성으로 처리 (XSS 방지)
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.name-btn');
+  if (!btn) return;
+  const day = btn.dataset.day;
+  const name = btn.dataset.name;
+  if (day && name) toggleChief(day, name);
+});
+
+function renderResult(assignment, chiefs) {
+  const statsRow = document.getElementById('statsRow');
+  const counts = DAYS.map(d => assignment[d].length);
+  const minC = Math.min(...counts), maxC = Math.max(...counts);
+  statsRow.innerHTML = `
+    <div class="stat"><div class="stat-label">총 학생</div><div class="stat-value">${students.length}</div></div>
+    <div class="stat"><div class="stat-label">최소 인원</div><div class="stat-value">${minC}</div></div>
+    <div class="stat"><div class="stat-label">최대 인원</div><div class="stat-value">${maxC}</div></div>
+  `;
+
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML = '';
+
+  DAYS.forEach((d, i) => {
+    const members = assignment[d];
+    const chief = chiefs[d] || null;
+    const color = DAY_COLORS[i];
+
+    const tr = document.createElement('tr');
+
+    // 이름 버튼 생성
+    const nameBtns = members.map(name => {
+      const isChief = name === chief;
+      const safeDay = d;
+      return `<button class="name-btn${isChief ? ' is-chief' : ''}" data-day="${safeDay}" data-name="${name.replace(/"/g, '&quot;')}" title="${isChief ? '부장 해제' : '부장으로 지정'}">${name}</button>`;
+    }).join('');
+
+    tr.innerHTML = `
+      <td><span class="day-pill" style="background:${color.bg};color:${color.text};">${d}요일</span></td>
+      <td>
+        <div class="member-list">${nameBtns}</div>
+      </td>
+      <td class="count-num">${members.length}명</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('reshuffleBtn').style.display = 'inline-block';
+  document.getElementById('downloadBtn').style.display = 'inline-block';
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function downloadCSV() {
+  if (!lastAssignment) return;
+
+  const rows = [['요일', '역할', '이름']];
+  DAYS.forEach(d => {
+    const chief = lastChiefs ? lastChiefs[d] : null;
+    lastAssignment[d].forEach(name => {
+      rows.push([`${d}요일`, name === chief ? '청소 부장' : '당번', name]);
+    });
+  });
+
+  const bom = '\uFEFF';
+  const csvContent = bom + rows.map(r => r.map(cell => `"${cell}"`).join(',')).join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `청소당번_${dateStr}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
