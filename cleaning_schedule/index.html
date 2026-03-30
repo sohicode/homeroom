@@ -59,6 +59,24 @@
     font-family: 'DM Mono', monospace;
   }
 
+  /* 교체 상태 바 */
+  .swap-status {
+    display: none; align-items: center; gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #FAEEDA;
+    border: 1px solid #EF9F27;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem; flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .swap-status.visible { display: flex; }
+  .swap-slot { display: flex; align-items: center; gap: 6px; }
+  .swap-slot-label { font-size: 0.72rem; font-family: 'DM Mono', monospace; color: var(--text-faint); }
+  .swap-slot-name { font-weight: 700; color: #633806; font-size: 0.9rem; }
+  .swap-slot-name.empty { color: var(--text-faint); font-weight: 400; font-style: italic; }
+  .swap-arrow { font-size: 1rem; color: #633806; opacity: 0.5; }
+  .swap-status-msg { font-size: 0.78rem; color: #633806; margin-left: auto; }
+
   .container {
     max-width: 820px;
     margin: 0 auto;
@@ -371,6 +389,29 @@
     opacity: 0.75;
   }
 
+  .name-btn.selected {
+    background: #FAEEDA !important;
+    border-color: #EF9F27 !important;
+    border-width: 2px;
+    color: #633806 !important;
+    font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(239,159,39,0.2);
+    transform: scale(1.05);
+  }
+
+  .name-btn.flash {
+    animation: flashSwap 0.5s ease;
+  }
+  @keyframes flashSwap {
+    0%   { background: #EAF3DE; border-color: #639922; }
+    100% { }
+  }
+
+  .swap-count-badge {
+    margin-left: auto; font-size: 0.78rem;
+    font-family: 'DM Mono', monospace; color: var(--text-faint);
+  }
+
   .count-num {
     font-family: 'DM Mono', monospace;
     font-size: 0.85rem;
@@ -476,7 +517,7 @@
       <div class="notice" style="margin-top:1rem;">
         <strong>배치 규칙</strong><br>
         불가 요일 제외 후, 요일별 인원 차이가 최대 1명 이내로 균등 배치합니다. (25명 → 5명×5일)<br>
-        배치 후 각 이름을 클릭하면 청소 부장으로 지정/해제할 수 있습니다.
+        배치 후 이름을 클릭하면 교체 선택, 더블클릭하면 청소 부장으로 지정/해제할 수 있습니다.
       </div>
       <div class="warn-msg" id="warnMsg"></div>
     </div>
@@ -490,12 +531,27 @@
     </div>
     <div class="card-body">
       <div class="warn-msg" id="warnMsgResult"></div>
+
+      <!-- 교체 상태 바 -->
+      <div class="swap-status" id="swapStatus">
+        <div class="swap-slot">
+          <span class="swap-slot-label">1번째</span>
+          <span class="swap-slot-name empty" id="slot1">선택 안 됨</span>
+        </div>
+        <span class="swap-arrow">⇄</span>
+        <div class="swap-slot">
+          <span class="swap-slot-label">2번째</span>
+          <span class="swap-slot-name empty" id="slot2">선택 안 됨</span>
+        </div>
+        <span class="swap-status-msg" id="swapMsg">교체할 첫 번째 학생을 클릭하세요</span>
+      </div>
+
       <div class="stats-row" id="statsRow"></div>
       <table>
         <thead>
           <tr>
             <th style="width:72px;">요일</th>
-            <th>당번 (이름 클릭 → 부장 지정/해제)</th>
+            <th>당번 (클릭 → 교체 선택 · 더블클릭 → 부장 지정/해제)</th>
             <th style="width:52px; text-align:right;">인원</th>
           </tr>
         </thead>
@@ -504,6 +560,8 @@
       <div class="result-actions">
         <button class="primary" onclick="assign()">다시 섞기</button>
         <button onclick="downloadCSV()">CSV 다운로드</button>
+        <button onclick="resetSelection()" id="cancelBtn" disabled style="display:none;">선택 취소</button>
+        <span class="swap-count-badge" id="swapCountBadge"></span>
       </div>
     </div>
   </div>
@@ -523,6 +581,8 @@ const DAY_COLORS = [
 let students = [];
 let lastAssignment = null;
 let lastChiefs = null;
+let selected = null;  // { day, name } | null
+let swapCount = 0;
 
 // Drag & drop
 const zone = document.getElementById('uploadZone');
@@ -599,6 +659,8 @@ function renderPreview() {
   actionCard.style.display = students.length ? 'block' : 'none';
   document.getElementById('resultCard').style.display = 'none';
   lastAssignment = null;
+  selected = null;
+  swapCount = 0;
 }
 
 function shuffle(arr) {
@@ -679,23 +741,98 @@ function assign() {
 
   lastAssignment = assignment;
   lastChiefs = {};
+  selected = null;
+  swapCount = 0;
   renderResult(assignment, lastChiefs);
 }
 
+// ─────────────────────────────────────────────
+// 싱글클릭: 1:1 교체 선택
+// ─────────────────────────────────────────────
+function onNameClick(day, name) {
+  if (selected === null) {
+    selected = { day, name };
+    updateSwapStatus();
+    refreshBtn(day, name);
+    const cancelBtn = document.getElementById('cancelBtn');
+    cancelBtn.style.display = 'inline-block';
+    cancelBtn.disabled = false;
+  } else if (selected.day === day && selected.name === name) {
+    resetSelection();
+  } else {
+    doSwap(selected.day, selected.name, day, name);
+  }
+}
+
+function doSwap(day1, name1, day2, name2) {
+  const arr1 = lastAssignment[day1];
+  const arr2 = lastAssignment[day2];
+  const i1 = arr1.indexOf(name1);
+  const i2 = arr2.indexOf(name2);
+  if (i1 === -1 || i2 === -1) return;
+
+  arr1[i1] = name2;
+  arr2[i2] = name1;
+
+  // 부장이 교체된 경우 부장 정보도 이동
+  if (lastChiefs[day1] === name1) lastChiefs[day1] = name2;
+  else if (lastChiefs[day1] === name2) lastChiefs[day1] = name1;
+  if (lastChiefs[day2] === name2) lastChiefs[day2] = name1;
+  else if (lastChiefs[day2] === name1) lastChiefs[day2] = name2;
+
+  swapCount++;
+  selected = null;
+  resetSelection();
+  renderResult(lastAssignment, lastChiefs);
+}
+
+function resetSelection() {
+  const prev = selected;
+  selected = null;
+  const cancelBtn = document.getElementById('cancelBtn');
+  cancelBtn.disabled = true;
+  cancelBtn.style.display = 'none';
+  updateSwapStatus();
+  if (prev) refreshBtn(prev.day, prev.name);
+}
+
+function refreshBtn(day, name) {
+  const btn = document.querySelector(`.name-btn[data-day="${day}"][data-name="${CSS.escape(name)}"]`);
+  if (!btn) return;
+  const isSelected = selected && selected.day === day && selected.name === name;
+  if (isSelected) btn.classList.add('selected');
+  else btn.classList.remove('selected');
+}
+
+function updateSwapStatus() {
+  const statusEl = document.getElementById('swapStatus');
+  const slot1El = document.getElementById('slot1');
+  const slot2El = document.getElementById('slot2');
+  const msgEl   = document.getElementById('swapMsg');
+
+  if (!lastAssignment) { statusEl.classList.remove('visible'); return; }
+
+  statusEl.classList.add('visible');
+  if (selected === null) {
+    slot1El.textContent = '선택 안 됨'; slot1El.classList.add('empty');
+    slot2El.textContent = '선택 안 됨'; slot2El.classList.add('empty');
+    msgEl.textContent = swapCount > 0 ? `${swapCount}회 교체됨 · 교체할 첫 번째 학생을 클릭하세요` : '교체할 첫 번째 학생을 클릭하세요';
+  } else {
+    slot1El.textContent = `${selected.name} (${selected.day}요일)`;
+    slot1El.classList.remove('empty');
+    slot2El.textContent = '선택 안 됨'; slot2El.classList.add('empty');
+    msgEl.textContent = '교체할 두 번째 학생을 클릭하세요';
+  }
+}
+
+// ─────────────────────────────────────────────
+// 더블클릭: 부장 지정/해제
+// ─────────────────────────────────────────────
 function toggleChief(day, name) {
   if (!lastChiefs) return;
   lastChiefs[day] = (lastChiefs[day] === name) ? null : name;
   renderResult(lastAssignment, lastChiefs);
 }
-
-// 이벤트 위임: tbody 클릭 → data-day, data-name 속성으로 처리 (XSS 방지)
-document.addEventListener('click', e => {
-  const btn = e.target.closest('.name-btn');
-  if (!btn) return;
-  const day = btn.dataset.day;
-  const name = btn.dataset.name;
-  if (day && name) toggleChief(day, name);
-});
 
 function renderResult(assignment, chiefs) {
   const statsRow = document.getElementById('statsRow');
@@ -716,18 +853,35 @@ function renderResult(assignment, chiefs) {
     const color = DAY_COLORS[i];
 
     const tr = document.createElement('tr');
-
-    // 이름 버튼 - XSS 방지: 버튼 텍스트도 textContent로 처리
     const memberListDiv = document.createElement('div');
     memberListDiv.className = 'member-list';
+
     members.forEach(name => {
       const isChief = name === chief;
+      const isSelected = selected && selected.day === d && selected.name === name;
       const btn = document.createElement('button');
-      btn.className = 'name-btn' + (isChief ? ' is-chief' : '');
+      btn.className = 'name-btn' + (isChief ? ' is-chief' : '') + (isSelected ? ' selected' : '');
       btn.dataset.day = d;
       btn.dataset.name = name;
-      btn.title = isChief ? '부장 해제' : '부장으로 지정';
+      btn.title = isChief ? '더블클릭: 부장 해제 · 클릭: 교체 선택' : '더블클릭: 부장으로 지정 · 클릭: 교체 선택';
       btn.textContent = name;
+
+      let clickTimer = null;
+
+      // 싱글클릭: 교체 선택 (더블클릭과 구분하기 위해 딜레이)
+      btn.addEventListener('click', () => {
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => onNameClick(d, name), 220);
+      });
+
+      // 더블클릭: 부장 지정/해제
+      btn.addEventListener('dblclick', e => {
+        e.stopPropagation();
+        clearTimeout(clickTimer);
+        resetSelection();
+        toggleChief(d, name);
+      });
+
       memberListDiv.appendChild(btn);
     });
 
@@ -745,6 +899,7 @@ function renderResult(assignment, chiefs) {
     tbody.appendChild(tr);
   });
 
+  updateSwapStatus();
   document.getElementById('resultCard').style.display = 'block';
   document.getElementById('downloadBtn').style.display = 'inline-block';
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
