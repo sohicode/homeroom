@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리반 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F1;
+    --surface: #FFFFFF;
+    --surface2: #EEEDE7;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text: #1A1A18;
+    --text-muted: #6B6A65;
+    --text-faint: #A5A49F;
+    --accent: #2A2A27;
+  }
+
+  html, body {
+    min-height: 100vh;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  /* 헤더 */
+  .hero {
+    text-align: center;
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .hero-title span {
+    color: var(--text-faint);
+  }
+
+  .hero-sub {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  /* 카드 목록 */
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-link {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .card-link:hover {
+    border-color: var(--border-strong);
+    background: var(--surface);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  }
+
+  .card-link:active {
+    transform: translateY(0px);
+    box-shadow: none;
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 22px;
+  }
+
+  .card-icon.cleaning {
+    background: #EAF3DE;
+  }
+
+  .card-icon.seating {
+    background: #E6F1FB;
+  }
+
+  .card-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.2rem;
+  }
+
+  .card-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .card-arrow {
+    color: var(--text-faint);
+    flex-shrink: 0;
+    transition: transform 0.15s, color 0.15s;
+  }
+
+  .card-link:hover .card-arrow {
+    transform: translateX(3px);
+    color: var(--text-muted);
+  }
+
+  /* 구분선 */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .divider span {
+    font-size: 0.68rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* 푸터 */
+  .footer {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+  }
+
+  @media (max-width: 480px) {
+    .hero-title { font-size: 1.6rem; }
+    .card-link { padding: 1rem 1.1rem; gap: 1rem; }
+    .card-icon { width: 42px; height: 42px; font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-label">homeroom</div>
+    <div class="hero-title">우리반<span> 관리</span></div>
+    <div class="hero-sub">청소 당번 · 좌석 배치를 간편하게</div>
+  </div>
+
+  <div class="cards">
+
+    <a class="card-link" href="https://sohicode.github.io/homeroom/cleaning_schedule/">
+      <div class="card-icon cleaning">🧹</div>
+      <div class="card-text">
+        <div class="card-title">청소 당번 배치표</div>
+        <div class="card-desc">불가 요일 제외 · 요일별 균등 배치<br>청소 부장 지정 · CSV 다운로드</div>
+      </div>
+      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </a>
+
+    <a class="card-link" href="https://sohicode.github.io/homeroom/seating_chart/">
+      <div class="card-icon seating">🪑</div>
+      <div class="card-text">
+        <div class="card-title">좌석 배치표</div>
+        <div class="card-desc">앞자리 신청자 우선 배치 · 5열 28석<br>랜덤 배치 · CSV 다운로드</div>
+      </div>
+      <svg class="card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </a>
+
+  </div>
+
+  <div class="footer">sohicode.github.io/homeroom</div>
+
+</div>
+
+</body>
+</html>
