@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'NanumGothic'; src: url('/usr/share/fonts/truetype/nanum/NanumGothic.ttf'); font-weight: 400; }
+  @font-face { font-family: 'NanumGothic'; src: url('/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf'); font-weight: 700; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'NanumGothic', sans-serif; font-size: 11pt; color: #222; background: #fff; padding: 28px 32px; line-height: 1.6; }
+  h1 { font-size: 18pt; font-weight: 700; color: #3C3489; text-align: center; margin-bottom: 6px; }
+  .subtitle { text-align: center; font-size: 10pt; color: #777; margin-bottom: 24px; }
+  .section { margin-bottom: 22px; }
+  .section-title { font-size: 10pt; font-weight: 700; color: #666; letter-spacing: 0.05em; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; }
+  .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; background: #fff; }
+  .card-label { font-size: 10pt; font-weight: 700; color: #222; margin-bottom: 4px; }
+  .card-desc { font-size: 9pt; color: #555; line-height: 1.55; }
+
+  /* 핵심 원칙 컬러 카드 */
+  .p-blue   { border: 1.5px solid #5B8DEF; background: #EFF4FF; }
+  .p-blue   .card-label { color: #1a3f8f; }
+  .p-green  { border: 1.5px solid #3DB87A; background: #EDFAF3; }
+  .p-green  .card-label { color: #0d5c35; }
+  .p-orange { border: 1.5px solid #F5A623; background: #FFF7EA; }
+  .p-orange .card-label { color: #7a4800; }
+  .p-teal   { border: 1.5px solid #26B5B0; background: #EAFAFA; }
+  .p-teal   .card-label { color: #0b5450; }
+  .p-purple { border: 1.5px solid #9B6FE8; background: #F5EFFF; }
+  .p-purple .card-label { color: #4a2490; }
+  .p-pink   { border: 1.5px solid #E8608A; background: #FFF0F5; }
+  .p-pink   .card-label { color: #7a1a3a; }
+
+  .tip-card { background: #f5f5f5; border-left: 3px solid #aaa; border-radius: 0 6px 6px 0; padding: 9px 12px; margin-bottom: 6px; }
+  .tip-title { font-size: 10pt; font-weight: 700; color: #222; margin-bottom: 2px; }
+  .tip-text { font-size: 9pt; color: #555; line-height: 1.55; }
+  .alert-card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 9px 12px; margin-bottom: 6px; font-size: 9.5pt; color: #333; line-height: 1.55; background: #fafafa; }
+  .summary-box { margin-top: 10px; background: #EEEDFE; border-radius: 8px; padding: 11px 14px; font-size: 9.5pt; color: #3C3489; line-height: 1.65; }
+</style>
+</head>
+<body>
+<h1>건전한 이성교제 가이드</h1>
+<p class="subtitle">학교생활과 연애, 둘 다 잘하는 법</p>
+
+<div class="section">
+  <div class="section-title">✅ 건전한 이성교제 핵심 원칙</div>
+  <div class="card-grid">
+    <div class="card p-blue"><div class="card-label">🖐 적극적 동의</div><div class="card-desc">신체 접촉에는 반드시 상대방의 명확한 동의가 필요해요. 침묵이나 애매한 반응은 동의가 아니에요.</div></div>
+    <div class="card p-green"><div class="card-label">🤝 인격 존중</div><div class="card-desc">상대방의 인격을 항상 존중하고, 내 의견만 고집하지 않고 상대의 말에 귀 기울여요.</div></div>
+    <div class="card p-orange"><div class="card-label">📚 학업 균형</div><div class="card-desc">이성교제로 학업이나 기존 친구 관계 등 일상에 지장이 가지 않도록 균형을 유지해요.</div></div>
+    <div class="card p-teal"><div class="card-label">💳 더치페이</div><div class="card-desc">데이트 비용은 각자 부담하거나 상황에 맞게 나눠서 한쪽에 부담이 쏠리지 않게 해요.</div></div>
+    <div class="card p-purple"><div class="card-label">⏰ 시간과 절제</div><div class="card-desc">약속·귀가 시간을 지키고, 일시적인 충동에 따라 행동하지 않도록 이성을 유지해요.</div></div>
+    <div class="card p-pink"><div class="card-label">💔 이별 예절</div><div class="card-desc">상대가 이별을 이야기하면 슬프더라도 그 의견을 존중하고 깔끔하게 관계를 정리해요.</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">🏫 교실 안에서 — 티 나지 않게 지내는 법</div>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">공과 사 구분하기</div><div class="card-desc">교실 안에서는 연인이기 전에 '같은 반 친구'예요. 귓속말, 둘만 붙어 있기, 단둘만의 분위기로 주변 친구를 소외시키지 않아요.</div></div>
+    <div class="card"><div class="card-label">신체 접촉 자제</div><div class="card-desc">복도·교실 등 모두의 시선이 닿는 곳에서의 스킨십은 주변 친구들에게 불쾌감을 줄 수 있어요.</div></div>
+    <div class="card"><div class="card-label">각자의 친구도 소중히</div><div class="card-desc">온종일 둘이서만 있으면 기존 친구 관계가 멀어져요. 학교에서는 각자 친구들과도 잘 어울려요.</div></div>
+    <div class="card"><div class="card-label">갈등은 교실 밖에서</div><div class="card-desc">둘 사이의 다툼이나 감정을 교실까지 가져오지 않아요. 반 친구들에게 상대를 험담하여 편을 가르는 행동은 학급 분위기를 해쳐요.</div></div>
+    <div class="card"><div class="card-label">모둠 활동에 사심 금지</div><div class="card-desc">같은 조가 됐을 때 둘만 따로 놀거나, 싸웠다고 불성실하게 참여하면 조원들에게 민폐가 돼요.</div></div>
+  </div>
+  <div class="summary-box">💡 "어? 둘이 사귀는 거 맞아? 학교에서는 그냥 친한 친구 같네!" — 이런 말을 들을 정도로 깔끔하게 연애하는 게 롱런의 비결이자 최고의 매너예요.</div>
+</div>
+
+<div class="section">
+  <div class="section-title">💬 고백할 때 — 건강하게 마음 전하기</div>
+  <div class="tip-card"><div class="tip-title">명확하게 표현하기</div><div class="tip-text">"사귀고 싶어"처럼 솔직하고 직접적으로 표현하는 게 상대방도 대답하기 쉬워요.</div></div>
+  <div class="tip-card"><div class="tip-title">생각할 시간 주기</div><div class="tip-text">답을 바로 요구하지 않아요. 상대방이 충분히 생각할 수 있도록 여유를 줘야 해요.</div></div>
+  <div class="tip-card"><div class="tip-title">장소 선택</div><div class="tip-text">여러 사람 앞이나 SNS 공개 자리에서의 고백은 상대를 곤란하게 해요. 조용하고 부담 없는 곳에서 전해요.</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">🚦 거절당했을 때 — 스토커가 되지 않으려면</div>
+  <div class="alert-card">✔ <strong>거절은 거절 그대로 받아들이기</strong> — "튕기는 걸까?", "부끄러워서 그러는 걸까?" 같은 자의적 해석은 금물. 상대의 의사를 있는 그대로 존중해요.</div>
+  <div class="alert-card">⚠ <strong>과도한 연락 금지</strong> — 답장 없는데 계속 메시지를 보내거나 전화를 연달아 하는 행동은 상대에게 공포심을 줘요.</div>
+  <div class="alert-card">🚫 <strong>동선 쫓지 않기</strong> — 등하굣길에 우연을 가장해 기다리거나 일거수일투족을 감시하듯 쳐다보는 건 스토킹의 시작이에요.</div>
+  <div class="alert-card">⚠ <strong>SNS 집착 금지</strong> — 상대방의 SNS를 계속 확인하거나 게시물에 반응을 보내는 건 스토킹과 비슷한 행동이에요.</div>
+  <div class="tip-card"><div class="tip-title">감정 추스르기</div><div class="tip-text">거절로 인한 속상함은 친구나 가족과 대화하며 풀어요. 당사자에게 화풀이하거나 소문을 퍼뜨리지 않아요.</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">🤝 건강한 의사소통</div>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">직접 묻고 확인하기</div><div class="card-desc">신체 접촉에 대해 상대방의 의견을 직접 묻고 답변을 들어야 해요. 상대의 답변은 무조건 존중해요.</div></div>
+    <div class="card"><div class="card-label">강요는 폭력</div><div class="card-desc">"사랑하니까 해줄 수 있잖아"라며 신체 접촉을 강요하는 건 사랑이 아니라 폭력이에요.</div></div>
+    <div class="card"><div class="card-label">명확한 거절 표현</div><div class="card-desc">거절할 때는 "싫어", "원하지 않아"처럼 명확하게 표현해야 오해와 갈등을 줄일 수 있어요.</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">💔 이별 후 — 서로 존중하며 마무리</div>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">이별 의사 존중하기</div><div class="card-desc">상대가 이별을 이야기했다면 받아들이는 게 가장 중요해요. "왜"를 무한히 물어보거나 되돌리려 하지 않아요.</div></div>
+    <div class="card"><div class="card-label">사진·대화 비공개</div><div class="card-desc">연애 중 주고받은 사진이나 대화를 퍼뜨리는 건 심각한 불법 행위예요. 이별 후에도 개인정보는 철저히 보호해야 해요.</div></div>
+    <div class="card"><div class="card-label">나 자신에게 집중</div><div class="card-desc">상대가 어떻게 지내는지 신경 쓰기보다, 내가 좋아하는 것들을 찾고 친구들과 시간을 보내요.</div></div>
+  </div>
+</div>
+
+</body>
+</html>
